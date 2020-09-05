@@ -5,12 +5,14 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import kotlin.math.*
 
 class DecircleSlider : View {
 
     companion object {
+        private val TAG = DecircleSlider::class.java.simpleName
         private const val MAX_PROGRESS = 100
         private const val DEGREE_CONVERSION = MAX_PROGRESS / 360F
     }
@@ -31,10 +33,13 @@ class DecircleSlider : View {
         init(context, attrs)
     }
 
-    /**   Props   */
+    /**
+     * Props
+     */
 
+    // Progress
     private var progress = 0
-    private val progressInDegree = progress / DEGREE_CONVERSION
+    private var progressInDegree = progress / DEGREE_CONVERSION
 
 
     // Center points of Views
@@ -62,6 +67,7 @@ class DecircleSlider : View {
     private var pickerY = 0
     private var pickerWidth = 50F
     private var pickerPaint = Paint()
+    private var isPickerSelected = false
 
     private var maxWidth = max(backdropWidth, pickerWidth)
 
@@ -78,6 +84,11 @@ class DecircleSlider : View {
             style = Paint.Style.FILL
         }
     }
+
+
+    /**
+     * Draw & Size changes
+     */
 
     /**
      * Called every time View size changes
@@ -121,4 +132,78 @@ class DecircleSlider : View {
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+
+        when (event?.action) {
+            MotionEvent.ACTION_DOWN -> {
+                val x = event.x.toInt()
+                val y = event.y.toInt()
+
+                // Detect whether user has selected picker
+                if (
+                    x < pickerX + pickerWidth && x > pickerX - pickerWidth &&
+                    y < pickerY + pickerWidth && y > pickerY - pickerWidth
+                ) {
+                    isPickerSelected = true
+
+                    updateProgress(x, y)
+
+                    // Prevent any parent touch events Eg: RecyclerView, ScrollView
+                    parent.requestDisallowInterceptTouchEvent(true)
+                }
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (isPickerSelected) {
+                    val x = event.x.toInt()
+                    val y = event.y.toInt()
+                    updateProgress(x, y)
+                }
+            }
+
+            MotionEvent.ACTION_UP -> {
+                isPickerSelected = false
+                // Allow parent touch events Eg: RecyclerView, ScrollView
+                parent.requestDisallowInterceptTouchEvent(false)
+            }
+        }
+        return true
+    }
+
+    private fun updateProgress(progress: Int) {
+        this.progress = progress
+        progressInDegree = progress / DEGREE_CONVERSION
+
+        // Calculate angle
+        angle = PI / 2 - (progressInDegree * PI) / 180
+
+        // Calc picker distance
+        pickerX = centerX + ((diameter / 2F) * cos(angle)).toInt()
+        pickerY = centerY - ((diameter / 2F) * sin(angle)).toInt()
+
+        invalidate()
+    }
+
+    private fun updateProgress(x: Int, y: Int) {
+        val distanceX = x - centerX
+        val distanceY = centerY - y
+
+        val distanceXY = sqrt(distanceX.toDouble().pow(2.0) + distanceY.toDouble().pow(2.0))
+
+        // Reverse
+        angle = acos(distanceX / distanceXY)
+        if (distanceY < 0) angle = -angle
+
+        // Calc picker distance
+        pickerX = centerX + ((diameter / 2F) * cos(angle)).toInt()
+        pickerY = centerY - ((diameter / 2F) * sin(angle)).toInt()
+
+        progressInDegree = (90 - (angle * 180) / PI).toFloat()
+        // Check bounds
+        if (progressInDegree < 0) progressInDegree += 360
+
+        progress = (progressInDegree * DEGREE_CONVERSION).toInt()
+
+        invalidate()
+    }
 }
