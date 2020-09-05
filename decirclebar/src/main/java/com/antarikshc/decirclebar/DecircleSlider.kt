@@ -32,6 +32,10 @@ class DecircleSlider : View {
     private var centerX = 0
     private var centerY = 0
 
+    private var diameter = 0
+
+    private var backdropWidth = 10F
+
     // Paints
     private var backdropPaint = Paint()
 
@@ -39,7 +43,7 @@ class DecircleSlider : View {
         backdropPaint = backdropPaint.apply {
             color = Color.GRAY
             style = Paint.Style.STROKE
-            strokeWidth = 10F
+            strokeWidth = backdropWidth
         }
     }
 
@@ -61,6 +65,10 @@ class DecircleSlider : View {
         centerX = right / 2 + (w - right) / 2
         centerY = bottom / 2 + (h - bottom) / 2
 
+        // Total height or width is diameter
+        // Minus the stroke width
+        diameter = min - backdropWidth.toInt()
+
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
@@ -68,7 +76,7 @@ class DecircleSlider : View {
     override fun onDraw(canvas: Canvas?) {
         canvas?.apply {
 
-            drawCircle(centerX.toFloat(), centerY.toFloat(), 300F, backdropPaint)
+            drawCircle(centerX.toFloat(), centerY.toFloat(), diameter / 2F, backdropPaint)
 
         }
     }
