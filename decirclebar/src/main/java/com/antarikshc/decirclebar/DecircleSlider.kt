@@ -82,6 +82,8 @@ class DecircleSlider : View {
 
     private var maxWidth = max(backdropWidth, pickerWidth)
 
+    private var animator: ValueAnimator? = null
+
 
     fun init(context: Context, attrs: AttributeSet? = null) {
         backdropPaint = backdropPaint.apply {
@@ -162,8 +164,14 @@ class DecircleSlider : View {
         val nextProgress = progress
 
         // Animate from current progress to specified progress
-        ValueAnimator.ofInt(currentProgress, nextProgress).apply {
-            duration = abs(nextProgress - currentProgress) * 10L
+        if (animator?.isRunning == true) {
+            animator?.end()
+        }
+        animator = ValueAnimator.ofInt(currentProgress, nextProgress).apply {
+            // If nextProgress > 100, keep max duration 1000
+            val dur = abs(nextProgress - currentProgress) * 10L
+            duration = min(1000, dur)
+
             interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener {
                 updateProgress(it.animatedValue as Int)
@@ -211,10 +219,10 @@ class DecircleSlider : View {
     }
 
     private fun updateProgress(progress: Int) {
-        if (progress < MIN_PROGRESS || progress > MAX_PROGRESS) return
+        this.progress = max(progress, 0)
+        this.progress = min(progress, 100)
 
-        this.progress = progress
-        progressInDegree = progress / DEGREE_CONVERSION
+        progressInDegree = this.progress / DEGREE_CONVERSION
 
         // Calculate angle
         angle = PI / 2 - (progressInDegree * PI) / 180
