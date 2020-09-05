@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -69,6 +70,13 @@ class DecircleSlider : View {
     private var pickerPaint = Paint()
     private var isPickerSelected = false
 
+
+    // Arc props
+    private var arcWidth = 20F
+    private val arcRect = RectF()
+    private var arcPaint = Paint()
+
+
     private var maxWidth = max(backdropWidth, pickerWidth)
 
 
@@ -82,6 +90,12 @@ class DecircleSlider : View {
         pickerPaint = pickerPaint.apply {
             color = Color.RED
             style = Paint.Style.FILL
+        }
+
+        arcPaint = arcPaint.apply {
+            color = Color.GREEN
+            style = Paint.Style.STROKE
+            strokeWidth = arcWidth
         }
     }
 
@@ -116,6 +130,11 @@ class DecircleSlider : View {
         pickerX = centerX + ((diameter / 2F) * cos(angle)).toInt()
         pickerY = centerY - ((diameter / 2F) * sin(angle)).toInt()
 
+        // Set bounds for Arc
+        val leftBound = w / 2F - (diameter / 2F)
+        val topBound = h / 2F - (diameter / 2F)
+        arcRect.set(leftBound, topBound, leftBound + diameter, topBound + diameter)
+
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
@@ -125,6 +144,9 @@ class DecircleSlider : View {
 
             // Draw backdrop
             drawCircle(centerX.toFloat(), centerY.toFloat(), diameter / 2F, backdropPaint)
+
+            // Draw Progress Arc
+            drawArc(arcRect, -90F, progressInDegree, false, arcPaint)
 
             // Draw Picker
             drawCircle(pickerX.toFloat(), pickerY.toFloat(), pickerWidth / 2F, pickerPaint)
