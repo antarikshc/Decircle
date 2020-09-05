@@ -1,0 +1,3 @@
+include ':decirclebar'
+include ':app'
+rootProject.name = "Decircle"
