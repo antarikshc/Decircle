@@ -1,5 +1,6 @@
 package com.antarikshc.decirclebar
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -8,12 +9,14 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import kotlin.math.*
 
 class DecircleSlider : View {
 
     companion object {
         private val TAG = DecircleSlider::class.java.simpleName
+        private const val MIN_PROGRESS = 0
         private const val MAX_PROGRESS = 100
         private const val DEGREE_CONVERSION = MAX_PROGRESS / 360F
     }
@@ -154,6 +157,21 @@ class DecircleSlider : View {
         }
     }
 
+    fun setProgress(progress: Int) {
+        val currentProgress = this.progress
+        val nextProgress = progress
+
+        // Animate from current progress to specified progress
+        ValueAnimator.ofInt(currentProgress, nextProgress).apply {
+            duration = abs(nextProgress - currentProgress) * 10L
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener {
+                updateProgress(it.animatedValue as Int)
+            }
+            start()
+        }
+    }
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
 
         when (event?.action) {
@@ -193,6 +211,8 @@ class DecircleSlider : View {
     }
 
     private fun updateProgress(progress: Int) {
+        if (progress < MIN_PROGRESS || progress > MAX_PROGRESS) return
+
         this.progress = progress
         progressInDegree = progress / DEGREE_CONVERSION
 
